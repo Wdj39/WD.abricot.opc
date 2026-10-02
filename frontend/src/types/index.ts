@@ -74,7 +74,8 @@ export interface Task {
   priority: TaskPriority;
   dueDate: string | null;
   projectId: string;
-  project: { id: string; name: string; description: string | null };
+  // description absente quand la tâche vient de GET /projects/:id/tasks
+  project: { id: string; name: string; description?: string | null };
   assignees: { id: string; user: UserSummary }[];
   comments: Comment[];
 }

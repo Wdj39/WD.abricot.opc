@@ -3,7 +3,8 @@
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
 import TaskCard from '@/components/tasks/TaskCard';
-import { KanbanIcon, ListIcon, SearchIcon } from '@/components/ui/Icons';
+import { KanbanIcon, ListIcon } from '@/components/ui/Icons';
+import SearchBar from '@/components/ui/SearchBar';
 import { STATUS_LABELS, filterTasks, sortByUrgency } from '@/lib/tasks';
 import type { Task, TaskStatus } from '@/types';
 
@@ -130,25 +131,6 @@ function ViewLink({
       {icon}
       {label}
     </Link>
-  );
-}
-
-function SearchBar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
-  return (
-    <div className="relative w-full sm:w-72">
-      <label htmlFor="task-search" className="sr-only">
-        Rechercher une tâche
-      </label>
-      <input
-        id="task-search"
-        type="search"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="Rechercher une tâche"
-        className="w-full h-11 pl-4 pr-10 rounded-lg border border-grey-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-main"
-      />
-      <SearchIcon className="absolute right-3 top-1/2 -translate-y-1/2 text-grey-400" />
-    </div>
   );
 }
 
