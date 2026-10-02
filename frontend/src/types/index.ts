@@ -78,3 +78,25 @@ export interface Task {
   assignees: { id: string; user: UserSummary }[];
   comments: Comment[];
 }
+
+// ===== Projets =====
+
+// ADMIN = propriétaire ou administrateur, CONTRIBUTOR = simple membre
+export type ProjectRole = 'ADMIN' | 'CONTRIBUTOR';
+
+// Projet tel que renvoyé par GET /projects
+export interface Project {
+  id: string;
+  name: string;
+  description: string | null;
+  owner: UserSummary;
+  members: { id: string; role: ProjectRole; user: UserSummary }[];
+  _count: { tasks: number };
+  userRole: ProjectRole | null;
+}
+
+// Projet enrichi avec sa progression, calculée côté frontend
+export interface ProjectWithProgress extends Project {
+  doneCount: number;
+  totalCount: number;
+}
