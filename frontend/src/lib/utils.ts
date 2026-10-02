@@ -15,3 +15,14 @@ export function getInitials(user: Pick<User, 'name' | 'email'>): string {
   }
   return source.slice(0, 2).toUpperCase();
 }
+
+/**
+ * Le backend stocke un seul champ "name" ; la maquette affiche Prénom + Nom.
+ * - "Alice Martin"        → { firstName: "Alice", lastName: "Martin" }
+ * - "Jean Paul Dupont"    → { firstName: "Jean", lastName: "Paul Dupont" }
+ * - null                  → champs vides
+ */
+export function splitName(name: string | null): { firstName: string; lastName: string } {
+  const [firstName = '', ...rest] = (name ?? '').trim().split(/\s+/).filter(Boolean);
+  return { firstName, lastName: rest.join(' ') };
+}

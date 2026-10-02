@@ -31,3 +31,17 @@ export interface AuthData {
 // - email : valeur saisie, réaffichée après une erreur (React 19 vide
 //   le formulaire après chaque envoi). Le mot de passe n'est jamais renvoyé.
 export type AuthFormState = { error?: string; email?: string } | undefined;
+
+// État renvoyé aux formulaires de la page "Mon compte"
+// - success : message de confirmation
+// - values  : valeurs saisies, réaffichées après une erreur
+export type ProfileFormState =
+  | {
+      error?: string;
+      success?: string;
+      values?: { firstName: string; lastName: string; email: string };
+    }
+  | undefined;
+
+// État du formulaire de changement de mot de passe
+export type PasswordFormState = { error?: string; success?: string } | undefined;
