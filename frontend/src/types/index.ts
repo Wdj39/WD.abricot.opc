@@ -45,3 +45,36 @@ export type ProfileFormState =
 
 // État du formulaire de changement de mot de passe
 export type PasswordFormState = { error?: string; success?: string } | undefined;
+
+// ===== Tâches =====
+
+export type TaskStatus = 'TODO' | 'IN_PROGRESS' | 'DONE' | 'CANCELLED';
+export type TaskPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+
+// Version allégée d'un utilisateur, incluse dans les tâches et commentaires
+export interface UserSummary {
+  id: string;
+  name: string | null;
+  email: string;
+}
+
+export interface Comment {
+  id: string;
+  content: string;
+  createdAt: string;
+  author: UserSummary;
+}
+
+// Tâche telle que renvoyée par GET /dashboard/assigned-tasks
+export interface Task {
+  id: string;
+  title: string;
+  description: string | null;
+  status: TaskStatus;
+  priority: TaskPriority;
+  dueDate: string | null;
+  projectId: string;
+  project: { id: string; name: string; description: string | null };
+  assignees: { id: string; user: UserSummary }[];
+  comments: Comment[];
+}

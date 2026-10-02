@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useActionState } from "react";
-import Link from "next/link";
-import { signup } from "@/app/actions/auth";
+import { useActionState } from 'react';
+import Link from 'next/link';
+import { signup } from '@/app/actions/auth';
 
 export default function SignupForm() {
   // Même principe que LoginForm, mais relié à l'action "signup"
@@ -47,8 +47,8 @@ export default function SignupForm() {
             className="h-12 px-3 rounded-md border border-grey-200 bg-white text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main"
           />
           <p id="password-hint" className="text-xs text-grey-600">
-            8 caractères minimum, avec une majuscule, une minuscule, un chiffre
-            et un caractère spécial (@$!%*?&).
+            8 caractères minimum, avec une majuscule, une minuscule, un chiffre et un caractère
+            spécial (@$!%*?&).
           </p>
         </div>
 
@@ -64,12 +64,12 @@ export default function SignupForm() {
           disabled={isPending}
           className="self-center mt-2 w-44 h-12 rounded-lg bg-grey-950 text-white font-medium hover:bg-grey-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? "Inscription..." : "S'inscrire"}
+          {isPending ? 'Inscription...' : "S'inscrire"}
         </button>
       </form>
 
       <p className="text-sm text-grey-950">
-        Déjà inscrit ?{" "}
+        Déjà inscrit ?{' '}
         <Link href="/login" className="text-brand-dark underline hover:text-brand-main">
           Se connecter
         </Link>

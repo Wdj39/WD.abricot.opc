@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useActionState } from "react";
-import Link from "next/link";
-import { login } from "@/app/actions/auth";
+import { useActionState } from 'react';
+import Link from 'next/link';
+import { login } from '@/app/actions/auth';
 
 export default function LoginForm() {
   // useActionState relie le formulaire à l'action serveur :
@@ -60,12 +60,12 @@ export default function LoginForm() {
           disabled={isPending}
           className="self-center mt-2 w-44 h-12 rounded-lg bg-grey-950 text-white font-medium hover:bg-grey-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          {isPending ? "Connexion..." : "Se connecter"}
+          {isPending ? 'Connexion...' : 'Se connecter'}
         </button>
       </form>
 
       <p className="text-sm text-grey-950">
-        Pas encore de compte ?{" "}
+        Pas encore de compte ?{' '}
         <Link href="/signup" className="text-brand-dark underline hover:text-brand-main">
           Créer un compte
         </Link>
