@@ -10,6 +10,7 @@ import type { Task } from '@/types';
  * - layout="row"  : ligne horizontale (vue Liste)
  * - layout="card" : bloc vertical compact (colonnes Kanban)
  * - showAssignees  : affiche les personnes assignées (page projet)
+ * - actions        : boutons supplémentaires (ex. "Modifier" sur la page projet)
  * - showProject    : nom du projet (inutile sur la page du projet lui-même)
  * - showViewLink   : bouton "Voir" (masqué sur la page projet, où il
  *                    renverrait vers la page déjà affichée)
@@ -20,12 +21,14 @@ export default function TaskCard({
   showAssignees = false,
   showViewLink = true,
   showProject = true,
+  actions,
 }: {
   task: Task;
   layout?: 'row' | 'card';
   showAssignees?: boolean;
   showViewLink?: boolean;
   showProject?: boolean;
+  actions?: React.ReactNode;
 }) {
   const overdue = isOverdue(task);
   const commentCount = task.comments.length;
@@ -69,10 +72,10 @@ export default function TaskCard({
       </div>
     ) : null;
 
-  // Pour l'instant "Voir" mène au projet ; il ouvrira le détail de la tâche plus tard
+  // "Voir" ouvre la page du projet directement sur le détail de la tâche
   const viewLink = (
     <Link
-      href={`/projects/${task.projectId}`}
+      href={`/projects/${task.projectId}?task=${task.id}`}
       className="inline-flex items-center justify-center h-10 px-6 rounded-lg bg-grey-950 text-white text-sm font-medium hover:bg-grey-800 transition"
     >
       Voir<span className="sr-only"> la tâche {task.title}</span>
@@ -92,6 +95,7 @@ export default function TaskCard({
         {meta}
         {assignees}
         {showViewLink && <div className="self-start mt-1">{viewLink}</div>}
+        {actions && <div className="self-start mt-1">{actions}</div>}
       </article>
     );
   }
@@ -111,6 +115,7 @@ export default function TaskCard({
       <div className="flex items-center gap-4 sm:flex-col sm:items-end shrink-0">
         <StatusBadge status={task.status} />
         {showViewLink && viewLink}
+        {actions}
       </div>
     </article>
   );

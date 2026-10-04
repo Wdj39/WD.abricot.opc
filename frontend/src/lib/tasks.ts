@@ -8,6 +8,14 @@ export const STATUS_LABELS: Record<TaskStatus, string> = {
   CANCELLED: 'Annulée',
 };
 
+/** Libellés affichés pour chaque priorité */
+export const PRIORITY_LABELS: Record<TaskPriority, string> = {
+  LOW: 'Basse',
+  MEDIUM: 'Moyenne',
+  HIGH: 'Haute',
+  URGENT: 'Urgente',
+};
+
 /**
  * Rang de chaque priorité (0 = la plus urgente).
  * Le backend trie la priorité comme du texte (ordre alphabétique :

@@ -101,3 +101,21 @@ export interface ProjectWithProgress extends Project {
   doneCount: number;
   totalCount: number;
 }
+
+// État des formulaires de création / modification de projet
+// values : titre et description réaffichés après une erreur
+export type ProjectFormState =
+  { error?: string; success?: boolean; values?: { name: string; description: string } } | undefined;
+
+// Valeurs du formulaire de tâche (réaffichées après une erreur)
+export interface TaskFormValues {
+  title: string;
+  description: string;
+  dueDate: string; // format AAAA-MM-JJ attendu par <input type="date">
+  status: TaskStatus;
+  priority: TaskPriority;
+  assigneeIds: string[];
+}
+
+export type TaskFormState =
+  { error?: string; success?: boolean; values?: TaskFormValues } | undefined;

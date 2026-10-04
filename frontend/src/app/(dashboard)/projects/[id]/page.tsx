@@ -1,12 +1,22 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import AiTaskButton from '@/components/ai/AiTaskModal';
 import Avatar from '@/components/ui/Avatar';
+import ProjectModalButton from '@/components/projects/ProjectModalButton';
 import ProjectTasks from '@/components/projects/ProjectTasks';
+import TaskModalButton from '@/components/tasks/TaskModalButton';
 import { apiFetch } from '@/lib/api';
 import type { Project, Task } from '@/types';
 
-export default async function ProjectDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function ProjectDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ task?: string }>; // ?task=... ouvre le détail d'une tâche
+}) {
   const { id } = await params;
+  const { task: openTaskId } = await searchParams;
 
   // Projet et tâches chargés en parallèle
   const [projectRes, tasksRes] = await Promise.all([
@@ -46,6 +56,8 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
   const isAdmin = project.userRole === 'ADMIN';
   // Le propriétaire peut aussi figurer dans "members" : on évite le doublon
   const contributors = project.members.filter((m) => m.user.id !== project.owner.id);
+  // Personnes à qui on peut assigner une tâche : propriétaire + contributeurs
+  const members = [project.owner, ...contributors.map((m) => m.user)];
 
   return (
     <div className="flex flex-col gap-8">
@@ -62,39 +74,16 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-semibold text-grey-950">{project.name}</h1>
-              {/* Seuls les administrateurs peuvent modifier ; la modale arrivera plus tard */}
-              {isAdmin && (
-                <button
-                  type="button"
-                  disabled
-                  title="Bientôt disponible"
-                  className="text-sm text-brand-dark underline disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  Modifier
-                </button>
-              )}
+              {/* Seuls les administrateurs peuvent modifier le projet */}
+              {isAdmin && <ProjectModalButton project={project} variant="link" />}
             </div>
             <p className="text-grey-600">{project.description || 'Aucune description'}</p>
           </div>
         </div>
 
         <div className="flex gap-3 shrink-0">
-          <button
-            type="button"
-            disabled
-            title="Bientôt disponible"
-            className="h-12 px-6 rounded-lg bg-grey-950 text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            Créer une tâche
-          </button>
-          <button
-            type="button"
-            disabled
-            title="Bientôt disponible"
-            className="h-12 px-6 rounded-lg bg-brand-main text-white font-medium disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            ✦ IA
-          </button>
+          <TaskModalButton projectId={project.id} members={members} />
+          <AiTaskButton projectId={project.id} />
         </div>
       </div>
 
@@ -133,7 +122,12 @@ export default async function ProjectDetailPage({ params }: { params: Promise<{ 
           Impossible de charger les tâches : {tasksRes.error}
         </p>
       ) : (
-        <ProjectTasks tasks={tasksRes.data?.tasks ?? []} />
+        <ProjectTasks
+          tasks={tasksRes.data?.tasks ?? []}
+          projectId={project.id}
+          members={members}
+          initialOpenTaskId={openTaskId}
+        />
       )}
     </div>
   );
