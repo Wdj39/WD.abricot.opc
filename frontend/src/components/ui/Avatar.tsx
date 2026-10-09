@@ -3,7 +3,8 @@ import type { UserSummary } from '@/types';
 
 /**
  * Pastille ronde avec les initiales d'un utilisateur.
- * - highlight : fond orange plein (propriétaire du projet)
+ * - highlight : fond orange clair (propriétaire du projet, utilisateur connecté)
+ * - sinon       : fond gris (autres membres), comme la maquette
  * Le nom complet est donné aux lecteurs d'écran et en infobulle (title).
  */
 export default function Avatar({
@@ -17,7 +18,7 @@ export default function Avatar({
 }) {
   const label = user.name ?? user.email;
   const sizeClass = size === 'sm' ? 'w-7 h-7 text-[11px]' : 'w-10 h-10 text-sm';
-  const colorClass = highlight ? 'bg-brand-dark text-white' : 'bg-brand-light text-brand-dark';
+  const colorClass = highlight ? 'bg-brand-light text-grey-950' : 'bg-grey-200 text-grey-950';
 
   return (
     <span

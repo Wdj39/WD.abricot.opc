@@ -58,7 +58,7 @@ export default function ContributorPicker({
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Rechercher par nom ou email"
+        placeholder="Rechercher un collaborateur (nom ou email)"
         autoComplete="off"
         className="h-12 px-3 rounded-md border border-grey-200 bg-white text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main"
       />

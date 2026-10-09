@@ -54,9 +54,9 @@ export default function Modal({
       {/* Le contenu n'est monté que si la modale est ouverte : le formulaire
           repart de zéro à chaque ouverture */}
       {open && (
-        <div className="p-8 flex flex-col gap-6">
+        <div className="px-8 sm:px-12 py-10 flex flex-col gap-8">
           <div className="flex items-start justify-between gap-4">
-            <h2 id="modal-title" className="text-xl font-semibold">
+            <h2 id="modal-title" className="text-2xl font-medium text-grey-950">
               {title}
             </h2>
             <button

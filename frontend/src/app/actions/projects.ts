@@ -32,6 +32,8 @@ export async function createProject(
 ): Promise<ProjectFormState> {
   const { name, description, contributors } = readProjectForm(formData);
   if (!name) return { error: 'Le titre du projet est obligatoire.', values: { name, description } };
+  if (!description)
+    return { error: 'La description du projet est obligatoire.', values: { name, description } };
 
   const { data, error } = await apiFetch<{ project: Project }>('/projects', {
     method: 'POST',
@@ -58,6 +60,8 @@ export async function updateProject(
 ): Promise<ProjectFormState> {
   const { name, description, contributors } = readProjectForm(formData);
   if (!name) return { error: 'Le titre du projet est obligatoire.', values: { name, description } };
+  if (!description)
+    return { error: 'La description du projet est obligatoire.', values: { name, description } };
 
   const { error } = await apiFetch(`/projects/${projectId}`, {
     method: 'PUT',
@@ -94,4 +98,18 @@ export async function updateProject(
   revalidatePath(`/projects/${projectId}`);
   revalidatePath('/projects');
   return { success: true };
+}
+
+/**
+ * Suppression d'un projet (DELETE /projects/:id).
+ * Le backend la réserve au PROPRIÉTAIRE (403 sinon) ; le bouton n'est de toute
+ * façon affiché qu'à lui. Ses tâches et commentaires sont supprimés avec lui.
+ */
+export async function deleteProject(projectId: string): Promise<{ error?: string }> {
+  const { error } = await apiFetch(`/projects/${projectId}`, { method: 'DELETE' });
+  if (error) return { error };
+
+  revalidatePath('/projects');
+  revalidatePath('/dashboard');
+  redirect('/projects');
 }

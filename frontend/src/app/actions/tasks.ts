@@ -17,6 +17,14 @@ function readTaskForm(formData: FormData): TaskFormValues {
   };
 }
 
+/** Champs obligatoires (maquette) : titre, description, échéance */
+function validateTask(values: TaskFormValues): string | null {
+  if (!values.title) return 'Le titre de la tâche est obligatoire.';
+  if (!values.description) return 'La description de la tâche est obligatoire.';
+  if (!values.dueDate) return "L'échéance de la tâche est obligatoire.";
+  return null;
+}
+
 /** Rafraîchit toutes les pages qui affichent des tâches */
 function refreshTaskPages(projectId: string) {
   revalidatePath(`/projects/${projectId}`);
@@ -35,7 +43,8 @@ export async function createTask(
   formData: FormData
 ): Promise<TaskFormState> {
   const values = readTaskForm(formData);
-  if (!values.title) return { error: 'Le titre de la tâche est obligatoire.', values };
+  const invalid = validateTask(values);
+  if (invalid) return { error: invalid, values };
 
   const { data, error } = await apiFetch<{ task: Task }>(`/projects/${projectId}/tasks`, {
     method: 'POST',
@@ -68,7 +77,8 @@ export async function updateTask(
   formData: FormData
 ): Promise<TaskFormState> {
   const values = readTaskForm(formData);
-  if (!values.title) return { error: 'Le titre de la tâche est obligatoire.', values };
+  const invalid = validateTask(values);
+  if (invalid) return { error: invalid, values };
 
   const { error } = await apiFetch(`/projects/${projectId}/tasks/${taskId}`, {
     method: 'PUT',

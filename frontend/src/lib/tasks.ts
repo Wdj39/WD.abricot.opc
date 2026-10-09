@@ -75,3 +75,33 @@ export function isOverdue(task: Task): boolean {
   if (!task.dueDate || task.status === 'DONE') return false;
   return new Date(task.dueDate).getTime() < Date.now();
 }
+
+// ===== Mois (vue Kanban) — format "AAAA-MM" =====
+
+/** Mois courant au format "AAAA-MM" */
+export function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** true si la date ISO tombe dans le mois "AAAA-MM" */
+export function isInMonth(isoDate: string, month: string): boolean {
+  const date = new Date(isoDate);
+  const [year, monthNumber] = month.split('-').map(Number);
+  return date.getFullYear() === year && date.getMonth() + 1 === monthNumber;
+}
+
+/** Décale un mois "AAAA-MM" de n mois (ex. shiftMonth("2026-01", -1) → "2025-12") */
+export function shiftMonth(month: string, n: number): string {
+  const [year, monthNumber] = month.split('-').map(Number);
+  const date = new Date(year, monthNumber - 1 + n, 1);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/** "2026-10" → "octobre 2026" */
+export function formatMonth(month: string): string {
+  const [year, monthNumber] = month.split('-').map(Number);
+  return new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' }).format(
+    new Date(year, monthNumber - 1, 1)
+  );
+}

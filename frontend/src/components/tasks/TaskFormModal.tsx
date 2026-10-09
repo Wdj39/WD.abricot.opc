@@ -1,24 +1,21 @@
 'use client';
 
-import { useActionState, useEffect, useState, useTransition } from 'react';
-import { createTask, deleteTask, updateTask } from '@/app/actions/tasks';
-import Avatar from '@/components/ui/Avatar';
+import { useActionState, useEffect, useState } from 'react';
+import { createTask, updateTask } from '@/app/actions/tasks';
 import Modal from '@/components/ui/Modal';
-import { PRIORITY_LABELS, STATUS_LABELS } from '@/lib/tasks';
-import type {
-  Task,
-  TaskFormState,
-  TaskFormValues,
-  TaskPriority,
-  TaskStatus,
-  UserSummary,
-} from '@/types';
+import MultiSelect from '@/components/ui/MultiSelect';
+import { STATUS_LABELS } from '@/lib/tasks';
+import type { Task, TaskFormState, TaskFormValues, TaskStatus, UserSummary } from '@/types';
 
 const inputClass =
-  'h-12 px-3 rounded-md border border-grey-200 bg-white text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main';
+  'h-12 px-4 rounded-md border border-grey-200 bg-white text-sm text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main';
 
-const STATUSES: TaskStatus[] = ['TODO', 'IN_PROGRESS', 'DONE', 'CANCELLED'];
-const PRIORITIES: TaskPriority[] = ['LOW', 'MEDIUM', 'HIGH', 'URGENT'];
+// Pastilles de statut de la maquette (couleurs identiques aux badges)
+const STATUS_PILLS: { status: TaskStatus; className: string }[] = [
+  { status: 'TODO', className: 'bg-error-red-light text-error-red-dark' },
+  { status: 'IN_PROGRESS', className: 'bg-warning-orange-light text-warning-orange-dark' },
+  { status: 'DONE', className: 'bg-success-green-light text-success-green-dark' },
+];
 
 /** Modale de création (task absente) ou de modification (task fournie) */
 export default function TaskFormModal({
@@ -49,6 +46,8 @@ function initialValues(task?: Task): TaskFormValues {
     // "2024-02-15T00:00:00.000Z" → "2024-02-15" pour <input type="date">
     dueDate: task?.dueDate ? task.dueDate.slice(0, 10) : '',
     status: task?.status ?? 'TODO',
+    // La maquette n'affiche pas la priorité : on conserve celle de la tâche
+    // (ou « Moyenne » à la création), envoyée dans un champ caché
     priority: task?.priority ?? 'MEDIUM',
     assigneeIds: task?.assignees.map((a) => a.user.id) ?? [],
   };
@@ -70,19 +69,33 @@ function TaskForm({
     : createTask.bind(null, projectId);
   const [state, formAction, isPending] = useActionState<TaskFormState, FormData>(action, undefined);
 
+  // Champs contrôlés : le bouton reste grisé tant qu'un champ obligatoire est vide
+  // (maquette). Le serveur revérifie de toute façon (on ne fait jamais confiance
+  // au navigateur seul).
+  const [values, setValues] = useState<TaskFormValues>(() => initialValues(task));
+  const set = <K extends keyof TaskFormValues>(key: K, value: TaskFormValues[K]) =>
+    setValues((v) => ({ ...v, [key]: value }));
+  const isValid =
+    values.title.trim() !== '' && values.description.trim() !== '' && values.dueDate !== '';
+
   // Enregistrement réussi → fermeture de la modale
   useEffect(() => {
     if (state?.success) onDone();
   }, [state, onDone]);
 
-  // Après une erreur, on réaffiche ce qui avait été saisi
-  const values = state?.values ?? initialValues(task);
+  // Une tâche « Annulée » (statut hors maquette) garde sa pastille en modification
+  const pills =
+    values.status === 'CANCELLED' || task?.status === 'CANCELLED'
+      ? [...STATUS_PILLS, { status: 'CANCELLED' as const, className: 'bg-grey-100 text-grey-600' }]
+      : STATUS_PILLS;
 
   return (
-    <form action={formAction} className="flex flex-col gap-5" noValidate>
-      <div className="flex flex-col gap-1">
+    <form action={formAction} className="flex flex-col gap-6" noValidate>
+      <p className="text-xs text-grey-600">Les champs marqués d&apos;un * sont obligatoires.</p>
+
+      <div className="flex flex-col gap-2">
         <label htmlFor="task-title" className="text-sm text-grey-950">
-          Titre <span aria-hidden="true">*</span>
+          Titre<span aria-hidden="true">*</span>
         </label>
         <input
           id="task-title"
@@ -91,100 +104,81 @@ function TaskForm({
           required
           aria-required="true"
           maxLength={200}
-          defaultValue={values.title}
+          value={values.title}
+          onChange={(e) => set('title', e.target.value)}
           data-autofocus
           className={inputClass}
         />
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-2">
         <label htmlFor="task-description" className="text-sm text-grey-950">
-          Description
+          Description<span aria-hidden="true">*</span>
         </label>
         <textarea
           id="task-description"
           name="description"
-          rows={3}
+          rows={2}
+          required
+          aria-required="true"
           maxLength={1000}
-          defaultValue={values.description}
-          className="px-3 py-2 rounded-md border border-grey-200 bg-white text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main"
+          value={values.description}
+          onChange={(e) => set('description', e.target.value)}
+          className="px-4 py-3 rounded-md border border-grey-200 bg-white text-sm text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main"
         />
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-3">
-        <div className="flex flex-col gap-1">
-          <label htmlFor="task-due-date" className="text-sm text-grey-950">
-            Échéance
-          </label>
-          <input
-            id="task-due-date"
-            name="dueDate"
-            type="date"
-            defaultValue={values.dueDate}
-            className={inputClass}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="task-status" className="text-sm text-grey-950">
-            Statut
-          </label>
-          <select
-            // key : React recrée la liste avec la valeur conservée après une erreur
-            key={values.status}
-            id="task-status"
-            name="status"
-            defaultValue={values.status}
-            className={inputClass}
-          >
-            {STATUSES.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="flex flex-col gap-1">
-          <label htmlFor="task-priority" className="text-sm text-grey-950">
-            Priorité
-          </label>
-          <select
-            key={values.priority}
-            id="task-priority"
-            name="priority"
-            defaultValue={values.priority}
-            className={inputClass}
-          >
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {PRIORITY_LABELS[p]}
-              </option>
-            ))}
-          </select>
-        </div>
+      <div className="flex flex-col gap-2">
+        <label htmlFor="task-due-date" className="text-sm text-grey-950">
+          Échéance<span aria-hidden="true">*</span>
+        </label>
+        <input
+          id="task-due-date"
+          name="dueDate"
+          type="date"
+          required
+          aria-required="true"
+          value={values.dueDate}
+          onChange={(e) => set('dueDate', e.target.value)}
+          className={inputClass}
+        />
       </div>
 
-      {/* fieldset + legend : les lecteurs d'écran annoncent "Assigné à" avant chaque case */}
-      <fieldset className="flex flex-col gap-2">
-        <legend className="text-sm text-grey-950 mb-1">Assigné à</legend>
+      <MultiSelect
+        label="Assigné à :"
+        name="assigneeIds"
+        options={members}
+        selectedIds={values.assigneeIds}
+        onChange={(ids) => set('assigneeIds', ids)}
+      />
+
+      {/* Pastilles de statut = boutons radio natifs habillés :
+          flèches du clavier pour changer, statut lu par les lecteurs d'écran */}
+      <fieldset className="flex flex-col gap-3">
+        <legend className="text-sm text-grey-950 mb-3">Statut :</legend>
         <div className="flex flex-wrap gap-2">
-          {members.map((member) => (
+          {pills.map(({ status, className }) => (
             <label
-              key={member.id}
-              className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full border border-grey-200 bg-white text-sm cursor-pointer has-[:checked]:bg-brand-light has-[:checked]:border-brand-main has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-dark"
+              key={status}
+              className={`px-4 py-1.5 rounded-full text-sm cursor-pointer border-2 transition ${className} ${
+                values.status === status ? 'border-current' : 'border-transparent'
+              } has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-dark has-[:focus-visible]:ring-offset-2`}
             >
               <input
-                type="checkbox"
-                name="assigneeIds"
-                value={member.id}
-                defaultChecked={values.assigneeIds.includes(member.id)}
+                type="radio"
+                name="status"
+                value={status}
+                checked={values.status === status}
+                onChange={() => set('status', status)}
                 className="sr-only"
               />
-              <Avatar user={member} size="sm" />
-              {member.name ?? member.email}
+              {STATUS_LABELS[status]}
             </label>
           ))}
         </div>
       </fieldset>
+
+      <input type="hidden" name="priority" value={values.priority} />
 
       {state?.error && (
         <p role="alert" className="text-sm text-error-red">
@@ -192,76 +186,13 @@ function TaskForm({
         </p>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="h-12 px-6 rounded-lg bg-grey-950 text-white font-medium hover:bg-grey-800 transition disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isPending ? 'Enregistrement...' : task ? 'Enregistrer' : 'Ajouter une tâche'}
-        </button>
-        {task && <DeleteTaskButton projectId={projectId} taskId={task.id} onDeleted={onDone} />}
-      </div>
+      <button
+        type="submit"
+        disabled={!isValid || isPending}
+        className="self-start h-12 px-6 rounded-lg bg-grey-950 text-white font-medium hover:bg-grey-800 transition disabled:bg-grey-200 disabled:text-grey-600 disabled:cursor-not-allowed"
+      >
+        {isPending ? 'Enregistrement...' : task ? 'Enregistrer' : '+ Ajouter une tâche'}
+      </button>
     </form>
-  );
-}
-
-/** Suppression en deux temps : un clic pour demander, un second pour confirmer */
-function DeleteTaskButton({
-  projectId,
-  taskId,
-  onDeleted,
-}: {
-  projectId: string;
-  taskId: string;
-  onDeleted: () => void;
-}) {
-  const [confirming, setConfirming] = useState(false);
-  const [error, setError] = useState<string>();
-  const [isPending, startTransition] = useTransition();
-
-  const confirmDelete = () =>
-    startTransition(async () => {
-      const result = await deleteTask(projectId, taskId);
-      if (result.error) setError(result.error);
-      else onDeleted();
-    });
-
-  if (!confirming) {
-    return (
-      <button
-        type="button"
-        onClick={() => setConfirming(true)}
-        className="text-sm text-error-red underline hover:no-underline"
-      >
-        Supprimer la tâche
-      </button>
-    );
-  }
-
-  return (
-    <div role="group" aria-label="Confirmer la suppression" className="flex items-center gap-3">
-      <span className="text-sm text-grey-950">Supprimer définitivement ?</span>
-      <button
-        type="button"
-        onClick={confirmDelete}
-        disabled={isPending}
-        className="h-10 px-4 rounded-lg bg-error-red text-white text-sm font-medium disabled:opacity-60"
-      >
-        {isPending ? 'Suppression...' : 'Oui, supprimer'}
-      </button>
-      <button
-        type="button"
-        onClick={() => setConfirming(false)}
-        className="text-sm text-grey-600 underline"
-      >
-        Annuler
-      </button>
-      {error && (
-        <p role="alert" className="w-full text-sm text-error-red">
-          {error}
-        </p>
-      )}
-    </div>
   );
 }

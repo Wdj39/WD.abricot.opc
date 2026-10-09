@@ -1,11 +1,12 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import AiTaskButton from '@/components/ai/AiTaskModal';
 import Avatar from '@/components/ui/Avatar';
 import ProjectModalButton from '@/components/projects/ProjectModalButton';
 import ProjectTasks from '@/components/projects/ProjectTasks';
 import TaskModalButton from '@/components/tasks/TaskModalButton';
-import { apiFetch } from '@/lib/api';
+import { ArrowLeftIcon } from '@/components/ui/Icons';
+import { apiFetch, getCurrentUser } from '@/lib/api';
 import type { Project, Task } from '@/types';
 
 export default async function ProjectDetailPage({
@@ -13,13 +14,15 @@ export default async function ProjectDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ task?: string }>; // ?task=... ouvre le détail d'une tâche
+  searchParams: Promise<{ task?: string }>; // ?task=... déplie les commentaires d'une tâche
 }) {
   const { id } = await params;
   const { task: openTaskId } = await searchParams;
 
-  // Projet et tâches chargés en parallèle
-  const [projectRes, tasksRes] = await Promise.all([
+  // Utilisateur, projet et tâches chargés en parallèle
+  // (getCurrentUser est mis en cache : le layout l'a déjà demandé, pas de 2e requête)
+  const [user, projectRes, tasksRes] = await Promise.all([
+    getCurrentUser(),
     apiFetch<{ project: Project }>(`/projects/${id}`),
     apiFetch<{ tasks: Task[] }>(`/projects/${id}/tasks`),
   ]);
@@ -37,12 +40,14 @@ export default async function ProjectDetailPage({
         <p className="text-grey-600">
           Ce projet n&apos;existe pas ou vous n&apos;en faites pas partie.
         </p>
-        <Link href="/projects" className="text-brand-dark underline hover:text-brand-main">
+        <Link href="/projects" className="text-brand-dark underline hover:no-underline">
           Retour à mes projets
         </Link>
       </div>
     );
   }
+
+  if (!user) redirect('/logout');
 
   const project = projectRes.data?.project;
   if (!project) {
@@ -53,7 +58,12 @@ export default async function ProjectDetailPage({
     );
   }
 
+  // Droits (spécifications) :
+  // - administrateur : modifie le projet et les tâches
+  // - propriétaire   : peut en plus supprimer le projet (règle du backend)
+  // - contributeur   : crée et supprime des tâches, sans les modifier
   const isAdmin = project.userRole === 'ADMIN';
+  const isOwner = user.id === project.owner.id;
   // Le propriétaire peut aussi figurer dans "members" : on évite le doublon
   const contributors = project.members.filter((m) => m.user.id !== project.owner.id);
   // Personnes à qui on peut assigner une tâche : propriétaire + contributeurs
@@ -69,13 +79,15 @@ export default async function ProjectDetailPage({
             aria-label="Retour à mes projets"
             className="mt-1 flex items-center justify-center w-10 h-10 shrink-0 rounded-lg border border-grey-200 bg-white text-grey-950 hover:bg-grey-100 transition"
           >
-            <span aria-hidden="true">←</span>
+            <ArrowLeftIcon size={16} />
           </Link>
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap items-center gap-3">
               <h1 className="text-2xl font-semibold text-grey-950">{project.name}</h1>
               {/* Seuls les administrateurs peuvent modifier le projet */}
-              {isAdmin && <ProjectModalButton project={project} variant="link" />}
+              {isAdmin && (
+                <ProjectModalButton project={project} variant="link" canDelete={isOwner} />
+              )}
             </div>
             <p className="text-grey-600">{project.description || 'Aucune description'}</p>
           </div>
@@ -108,7 +120,7 @@ export default async function ProjectDetailPage({
           {contributors.map((m) => (
             <li key={m.id} className="flex items-center gap-2">
               <Avatar user={m.user} size="sm" />
-              <span className="px-3 py-1 rounded-full bg-white text-grey-950 text-sm">
+              <span className="px-3 py-1 rounded-full bg-grey-200 text-grey-800 text-sm">
                 {m.user.name ?? m.user.email}
               </span>
             </li>
@@ -126,6 +138,8 @@ export default async function ProjectDetailPage({
           tasks={tasksRes.data?.tasks ?? []}
           projectId={project.id}
           members={members}
+          currentUser={user}
+          canEditTasks={isAdmin}
           initialOpenTaskId={openTaskId}
         />
       )}

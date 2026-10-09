@@ -33,25 +33,40 @@ export default function TaskCard({
   const overdue = isOverdue(task);
   const commentCount = task.comments.length;
 
+  // Métadonnées séparées par des « | » comme sur la maquette.
+  // Les séparateurs sont décoratifs (aria-hidden) ; les libellés sr-only
+  // donnent le sens de chaque valeur aux lecteurs d'écran.
+  const separator = (
+    <span aria-hidden="true" className="text-grey-200">
+      |
+    </span>
+  );
+
   const meta = (
-    <ul className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-grey-600">
+    // Sur une seule ligne (pas de retour à la ligne qui laisserait un « | » orphelin) :
+    // le nom du projet se tronque avec « … » si la place manque.
+    <ul className="flex items-center gap-3 text-xs text-grey-600 min-w-0">
       {showProject && (
-        <li className="flex items-center gap-1.5">
-          <FolderIcon />
+        <li className="flex items-center gap-1.5 min-w-0">
+          <FolderIcon size={14} className="shrink-0" />
           <span className="sr-only">Projet :</span>
-          {task.project.name}
+          <span className="truncate">{task.project.name}</span>
         </li>
       )}
       {task.dueDate && (
-        <li className={`flex items-center gap-1.5 ${overdue ? 'text-error-red' : ''}`}>
-          <CalendarIcon />
+        <li
+          className={`flex items-center gap-1.5 shrink-0 whitespace-nowrap ${overdue ? 'text-error-red' : ''}`}
+        >
+          {showProject && separator}
+          <CalendarIcon size={14} />
           <span className="sr-only">Échéance :</span>
           {formatDueDate(task.dueDate)}
           {overdue && <span className="font-medium">· En retard</span>}
         </li>
       )}
-      <li className="flex items-center gap-1.5">
-        <CommentIcon />
+      <li className="flex items-center gap-1.5 shrink-0">
+        {(showProject || task.dueDate) && separator}
+        <CommentIcon size={14} />
         {commentCount}
         <span className="sr-only">{commentCount > 1 ? 'commentaires' : 'commentaire'}</span>
       </li>

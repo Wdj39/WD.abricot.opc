@@ -1,11 +1,9 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import TaskCard from '@/components/tasks/TaskCard';
-import TaskDetailModal from '@/components/tasks/TaskDetailModal';
-import TaskModalButton from '@/components/tasks/TaskModalButton';
+import ProjectTaskCard from '@/components/tasks/ProjectTaskCard';
 import SearchBar from '@/components/ui/SearchBar';
+import { ChevronDownIcon } from '@/components/ui/Icons';
 import { STATUS_LABELS, filterTasks, sortByUrgency } from '@/lib/tasks';
 import type { Task, TaskStatus, UserSummary } from '@/types';
 
@@ -16,28 +14,19 @@ export default function ProjectTasks({
   tasks,
   projectId,
   members,
+  currentUser,
+  canEditTasks,
   initialOpenTaskId,
 }: {
   tasks: Task[];
   projectId: string;
   members: UserSummary[];
+  currentUser: UserSummary;
+  canEditTasks: boolean;
   initialOpenTaskId?: string; // ?task=... dans l'URL (lien "Voir" du dashboard)
 }) {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState<StatusFilter>('ALL');
-  const [openTaskId, setOpenTaskId] = useState<string | null>(initialOpenTaskId ?? null);
-  const router = useRouter();
-  const pathname = usePathname();
-
-  // On relit la tâche dans les données à jour : après l'ajout d'un commentaire,
-  // la page est rafraîchie et la modale affiche aussitôt le nouveau commentaire
-  const openTask = tasks.find((t) => t.id === openTaskId) ?? null;
-
-  const closeDetail = () => {
-    setOpenTaskId(null);
-    // Retire ?task=... de l'URL sans recharger la page
-    if (initialOpenTaskId) router.replace(pathname, { scroll: false });
-  };
 
   const visibleTasks = useMemo(() => {
     // Par défaut on masque les tâches annulées ; elles restent accessibles via le filtre
@@ -53,34 +42,42 @@ export default function ProjectTasks({
   return (
     <section
       aria-labelledby="tasks-title"
-      className="bg-white rounded-xl border border-grey-200 p-6 sm:p-8 flex flex-col gap-6"
+      className="bg-white rounded-xl border border-grey-200 p-6 sm:p-10 flex flex-col gap-6"
     >
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <h2 id="tasks-title" className="text-lg font-semibold text-grey-950">
+          {/* tabIndex=-1 : peut recevoir le focus après la suppression d'une tâche */}
+          <h2 id="tasks-title" tabIndex={-1} className="text-lg font-semibold text-grey-950">
             Tâches
           </h2>
           <p className="text-sm text-grey-600">Par ordre de priorité</p>
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          {/* <select> natif : accessible au clavier et aux lecteurs d'écran sans effort */}
+          {/* <select> natif (accessible au clavier et aux lecteurs d'écran),
+              restylé avec le chevron de la maquette */}
           <label htmlFor="status-filter" className="sr-only">
             Filtrer par statut
           </label>
-          <select
-            id="status-filter"
-            value={status}
-            onChange={(e) => setStatus(e.target.value as StatusFilter)}
-            className="h-11 px-3 rounded-lg border border-grey-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand-main"
-          >
-            <option value="ALL">Tous les statuts</option>
-            {FILTERS.map((s) => (
-              <option key={s} value={s}>
-                {STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
+          <div className="relative">
+            <select
+              id="status-filter"
+              value={status}
+              onChange={(e) => setStatus(e.target.value as StatusFilter)}
+              className="appearance-none h-11 w-full sm:w-44 pl-4 pr-10 rounded-lg border border-grey-200 bg-white text-sm text-grey-950 focus:outline-none focus:ring-2 focus:ring-brand-main"
+            >
+              <option value="ALL">Statut : tous</option>
+              {FILTERS.map((s) => (
+                <option key={s} value={s}>
+                  {STATUS_LABELS[s]}
+                </option>
+              ))}
+            </select>
+            <ChevronDownIcon
+              size={14}
+              className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-grey-600"
+            />
+          </div>
           <SearchBar value={query} onChange={setQuery} />
         </div>
       </div>
@@ -100,30 +97,18 @@ export default function ProjectTasks({
         <ul className="flex flex-col gap-4">
           {visibleTasks.map((task) => (
             <li key={task.id}>
-              <TaskCard
+              <ProjectTaskCard
                 task={task}
-                showAssignees
-                showViewLink={false}
-                showProject={false}
-                actions={
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setOpenTaskId(task.id)}
-                      className="h-10 px-5 rounded-lg bg-grey-950 text-white text-sm font-medium hover:bg-grey-800 transition"
-                    >
-                      Voir<span className="sr-only"> la tâche {task.title}</span>
-                    </button>
-                    <TaskModalButton projectId={projectId} members={members} task={task} />
-                  </div>
-                }
+                projectId={projectId}
+                members={members}
+                currentUser={currentUser}
+                canEdit={canEditTasks}
+                initiallyOpen={task.id === initialOpenTaskId}
               />
             </li>
           ))}
         </ul>
       )}
-
-      <TaskDetailModal task={openTask} projectId={projectId} onClose={closeDetail} />
     </section>
   );
 }

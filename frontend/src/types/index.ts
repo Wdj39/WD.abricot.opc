@@ -119,3 +119,13 @@ export interface TaskFormValues {
 
 export type TaskFormState =
   { error?: string; success?: boolean; values?: TaskFormValues } | undefined;
+
+// Projet tel que renvoyé par GET /dashboard/projects-with-tasks :
+// uniquement les projets où l'utilisateur a des tâches, avec SES tâches
+export interface DashboardProject {
+  id: string;
+  name: string;
+  description: string | null;
+  owner: UserSummary;
+  tasks: Omit<Task, 'project'>[];
+}

@@ -9,10 +9,16 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
 
-  /* === BRAND === */
-  --color-brand-main: #ff7a29;
-  --color-brand-light: #ffe4d1;
-  --color-brand-dark: #cc5500;
+  /* === BRAND === (valeurs relevées dans la maquette Figma)
+     Accessibilité WCAG 2.1 AA — contraste mesuré :
+     - brand-main  #d3590b : 4,0:1 sur blanc → OK pour logo, icônes, bordures,
+       titres ≥ 24px (seuil 3:1), mais PAS pour du texte courant (seuil 4,5:1).
+     - brand-dark  #a84607 : 6,3:1 sur blanc, 5,0:1 sur brand-light → texte courant
+       orange (liens, onglets, badges).
+     - brand-light #ffe8d9 : fonds clairs (avatars, onglet actif). */
+  --color-brand-main: #d3590b;
+  --color-brand-light: #ffe8d9;
+  --color-brand-dark: #a84607;
 
   /* === NEUTRAL (Grey scale) === */
   --color-grey-950: #171717;
@@ -26,12 +32,17 @@
   /* === SYSTEM (Status) === */
   --color-success-green: #22c55e;
   --color-success-green-light: #dcfce7;
-  --color-error-red: #ef4444;
+  --color-success-green-dark: #15803d;
+  /* Couleurs système ajustées pour le contraste WCAG AA (≥ 4,5:1) :
+     les variantes "-dark" servent au texte des badges sur fond clair. */
+  --color-error-red: #dc2626;
+  --color-error-red-dark: #b91c1c;
   --color-error-red-light: #fee2e2;
   --color-info-blue: #3b82f6;
   --color-info-blue-light: #dbeafe;
   --color-warning-orange: #f59e0b;
   --color-warning-orange-light: #fef3c7;
+  --color-warning-orange-dark: #b45309;
 
   --font-sans: var(--font-geist-sans, ui-sans-serif, system-ui, sans-serif);
   --font-mono: var(--font-geist-mono, ui-monospace, monospace);
